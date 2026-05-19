@@ -10,8 +10,13 @@ import {
 import React, { useState, useEffect } from "react";
 import { dummyResumeData } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
+import api from "../configs/api";
 
 const Dashboard = () => {
+  const { user, token } = useSelector((state) => state.auth);
+  console.log(token);
   const colors = ["#9333ea", "#d97706", "#dc2626", "#0284c7", "#16a34a"];
   const [allResumes, setAllResumes] = useState([]);
   const [showCreateResume, setShowCreateResume] = useState(false);
@@ -24,9 +29,24 @@ const Dashboard = () => {
     setAllResumes(dummyResumeData);
   };
   const createResume = async (event) => {
-    event.preventDefault();
-    setShowCreateResume(false);
-    navigate(`/app/builder/res123`);
+    try {
+      event.preventDefault();
+      const { data } = await api.post(
+        "/api/resumes/create",
+        { title },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      setAllResumes([...allResumes, data.resume]);
+      setTitle("");
+      setShowCreateResume(false);
+      navigate(`/app/builder/${data.resume._id}`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message);
+    }
   };
   const uploadResume = async (event) => {
     event.preventDefault();
@@ -38,7 +58,7 @@ const Dashboard = () => {
   };
   const deleteResume = async (resumeId) => {
     const confirm = window.confirm(
-      "Are you sure you want to delete this resume?"
+      "Are you sure you want to delete this resume?",
     );
     if (confirm) {
       setAllResumes((prev) => prev.filter((resume) => resume._id != resumeId));
