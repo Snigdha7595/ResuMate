@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import api from "../configs/api";
+import pdfToText from "react-pdftotext";
 
 const Dashboard = () => {
   const { user, token } = useSelector((state) => state.auth);
@@ -22,8 +23,9 @@ const Dashboard = () => {
   const [showCreateResume, setShowCreateResume] = useState(false);
   const [showUploadResume, setShowUploadResume] = useState(false);
   const [title, setTitle] = useState("");
-  const [resume, setResume] = useState("");
+  const [resume, setResume] = useState(null);
   const [EditResumeId, setEditResumeId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const loadAllResumes = async () => {
     setAllResumes(dummyResumeData);
@@ -48,10 +50,78 @@ const Dashboard = () => {
       toast.error(error.response?.data?.message || error.message);
     }
   };
+  // const uploadResume = async (event) => {
+  //   event.preventDefault();
+  //   if (!title.trim()) {
+  //     toast.error("Please enter a resume title");
+  //     return;
+  //   }
+  //   if (!resume) {
+  //     toast.error("Please select a PDF file");
+  //     return;
+  //   }
+  //   setIsLoading(true);
+  //   try {
+  //     const resumeText = await pdfToText(resume);
+  //     const { data } = await api.post(
+  //       "/api/ai/upload-resume",
+  //       { title, resumeText },
+  //       { headers: { Authorization: `Bearer ${token}` } },
+  //     );
+  //     setTitle("");
+  //     setResume(null);
+  //     setShowUploadResume(false);
+  //     navigate(`/app/builder/${data.resumeId}`);
+  //   } catch (error) {
+  //     toast.error(error?.response?.data?.message || error.message);
+  //   }
+  //   setIsLoading(false);
+  // };
   const uploadResume = async (event) => {
     event.preventDefault();
-    setShowUploadResume(false);
-    navigate(`/app/builder/res123`);
+    if (!title.trim()) {
+      toast.error("Please enter a resume title");
+      return;
+    }
+    if (!resume) {
+      toast.error("Please select a PDF file");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      let resumeText;
+      try {
+        resumeText = await pdfToText(resume);
+      } catch (pdfError) {
+        toast.error(
+          "Could not read this PDF. Make sure it's a text-based PDF, not a scanned image.",
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      if (!resumeText || resumeText.trim().length === 0) {
+        toast.error(
+          "PDF appears to be empty or image-based. Please use a text-based PDF.",
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      const { data } = await api.post(
+        "/api/ai/upload-resume",
+        { title, resumeText },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setTitle("");
+      setResume(null);
+      setShowUploadResume(false);
+      navigate(`/app/builder/${data.resumeId}`);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message);
+    }
+    setIsLoading(false);
   };
   const editTitle = async (event) => {
     event.preventDefault();

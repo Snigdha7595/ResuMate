@@ -10,7 +10,7 @@ export const enhanceProfessionalSummary = async (req, res) => {
     if (!userContent) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    const reponse = await ai.chat.completions.create({
+    const response = await ai.chat.completions.create({
       model: process.env.OPENAI_MODEL,
       messages: [
         {
@@ -39,7 +39,7 @@ export const enhanceJobDescription = async (req, res) => {
     if (!userContent) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    const reponse = await ai.chat.completions.create({
+    const response = await ai.chat.completions.create({
       model: process.env.OPENAI_MODEL,
       messages: [
         {
@@ -110,7 +110,6 @@ export const uploadResume = async (req, res) => {
     ],
 
     education: [
-      // ✅ renamed from duplicate "experience"
       {
         institution: { type: String },
         degree: { type: String },
@@ -121,7 +120,7 @@ export const uploadResume = async (req, res) => {
       ],
     }
     `;
-    const reponse = await ai.chat.completions.create({
+    const response = await ai.chat.completions.create({
       model: process.env.OPENAI_MODEL,
       messages: [
         { role: "system", content: systemPrompt },
@@ -130,12 +129,12 @@ export const uploadResume = async (req, res) => {
           content: userPrompt,
         },
       ],
-      response_format: { type: "json_object" },
+      // response_format: { type: "json_object" },
     });
     const extractedData = response.choices[0].message.content;
     const parsedData = JSON.parse(extractedData);
     const newResume = await Resume.create({ userId, title, ...parsedData });
-    res.json({ resumId: newResume._id });
+    res.json({ resumeId: newResume._id });
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }
