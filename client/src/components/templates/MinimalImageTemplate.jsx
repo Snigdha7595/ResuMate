@@ -191,7 +191,10 @@ const MinimalImageTemplate = ({ data, accentColor }) => {
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
     const [year, month] = dateStr.split("-");
-    return new Date(year, month - 1).toLocaleDateString("en-US", {
+    if (!month) return dateStr; // not YYYY-MM format, return as-is
+    const date = new Date(year, month - 1);
+    if (isNaN(date)) return dateStr; // invalid date, return as-is
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
     });

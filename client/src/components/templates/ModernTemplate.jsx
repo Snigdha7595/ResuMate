@@ -211,12 +211,14 @@ const ModernTemplate = ({ data, accentColor }) => {
   const formatDate = (dateStr) => {
     if (!dateStr) return "";
     const [year, month] = dateStr.split("-");
-    return new Date(year, month - 1).toLocaleDateString("en-US", {
+    if (!month) return dateStr; // not YYYY-MM format, return as-is
+    const date = new Date(year, month - 1);
+    if (isNaN(date)) return dateStr; // invalid date, return as-is
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
     });
   };
-
   return (
     <div className="max-w-4xl mx-auto bg-white text-gray-800">
       {/* ================= HEADER ================= */}
